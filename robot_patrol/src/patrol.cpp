@@ -39,16 +39,32 @@ void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg){
 
   RCLCPP_INFO(this->get_logger(), "clear distance infront of the robot: %f", msg->ranges[360]);
   for(int a = 340; a <380; a++){
-    if(msg->ranges[a] < 0.35 || msg->ranges[180] < 0.1 || msg->ranges[540] < 0.1){
+    if(msg->ranges[180] < 0.125 || msg->ranges[540] < 0.125){
+    for(int i=180; i<541; i++){
+        if (msg->ranges[i] > largest_distance_){
+        largest_distance_ = msg->ranges[i];
+        direction_ = (i/2 - 180)*(M_PI/180);
+        RCLCPP_INFO(this->get_logger(), "direction: %f", direction_/2);
+    }}
+    twist.linear.x = 0.1;
+    twist.angular.z = direction_/2;
+    cmd_pub->publish(twist);
+    }  
+    else if(msg->ranges[a] < 0.7 && msg->ranges[a] > 0.5){
 //   find safe direction
     for(int i=180; i<541; i++){
         if (msg->ranges[i] > largest_distance_){
         largest_distance_ = msg->ranges[i];
         direction_ = (i/2 - 180)*(M_PI/180);
         RCLCPP_INFO(this->get_logger(), "direction: %f", direction_/2);
+        twist.linear.x = 0.1;
+        twist.angular.z = 0;
+        cmd_pub->publish(twist);    
 
         }
-    }
+    }}
+    else if(msg->ranges[a] < 0.35){ 
+    RCLCPP_INFO(this->get_logger(), "turning ");
     twist.linear.x = 0.1;
     twist.angular.z = direction_/2;
     cmd_pub->publish(twist);
